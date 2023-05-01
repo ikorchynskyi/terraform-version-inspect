@@ -103,7 +103,7 @@ func GetVersions() ([]*version.Version, error) {
 func GetLatestRequired(constraints version.Constraints, versions []*version.Version) (*version.Version, error) {
 	for _, v := range versions {
 		if constraints.Check(v) {
-			log.Info().Str("version", v.String()).Msg("Required version found")
+			log.Debug().Str("version", v.String()).Msg("Required version found")
 			return v, nil
 		}
 	}
