@@ -17,6 +17,8 @@
 !README.md
 !LICENSE
 
+!/.github/**/*.yml
+
 # !Makefile
 
 # ...even if they are in subdirectories
