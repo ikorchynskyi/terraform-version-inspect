@@ -59,7 +59,7 @@ func GetConstraints(module *tfconfig.Module) (version.Constraints, error) {
 	v := strings.Join(module.RequiredCore, ", ")
 	constraints, err := version.NewConstraint(v)
 	if err != nil {
-		log.Error().Err(err).Str("constraint", v).Msg("Failed to parse required version")
+		log.Error().Err(err).Str("constraints", v).Msg("Failed to parse required version")
 		return nil, err
 	}
 	return constraints, nil
@@ -108,6 +108,6 @@ func GetLatestRequired(constraints version.Constraints, versions []*version.Vers
 		}
 	}
 	err := errors.New("unsupported terraform core version")
-	log.Error().Err(err).Msg("Failed to find required version")
+	log.Error().Err(err).Str("constraints", constraints.String()).Msg("Failed to find required version")
 	return nil, err
 }
