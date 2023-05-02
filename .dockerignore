@@ -1,0 +1,8 @@
+# Ignore everything
+*
+# Explicit includes
+!*.go
+!cmd/
+!go.mod
+!go.sum
+!internal/
