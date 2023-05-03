@@ -4,12 +4,11 @@ on:
   push:
     branches:
       - main
+    tags:
+      - v*.*.*
   pull_request:
     branches:
       - main
-  create:
-    tags:
-      - v*.*.*
 
 jobs:
   build:
@@ -38,6 +37,6 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         platforms: 'linux/amd64,linux/arm64/v8'
-        push: ${{ github.event_name == 'create' && github.event.ref_type == 'tag' && startsWith(github.event.ref, 'v') }}
+        push: ${{ github.event.ref_type == 'tag' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
