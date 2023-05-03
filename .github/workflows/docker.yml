@@ -37,6 +37,6 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         platforms: 'linux/amd64,linux/arm64/v8'
-        push: ${{ github.event.ref_type == 'tag' }}
+        push: ${{ github.event.deleted == false && startsWith(github.event.ref, 'refs/tags/v') }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
