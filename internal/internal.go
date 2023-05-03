@@ -19,6 +19,7 @@ import (
 const (
 	ReleaseListLimit    int    = 20
 	ReleaseListEndpoint string = "https://api.releases.hashicorp.com/v1/releases/terraform"
+	ResponseContentType string = "application/json"
 )
 
 type Release struct {
@@ -75,9 +76,9 @@ func GetReleases(endpoint string) ([]*Release, error) {
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create request")
-		return nil, nil
+		return nil, err
 	}
-	req.Header.Set("accept", "application/json")
+	req.Header.Set("accept", ResponseContentType)
 	query := req.URL.Query()
 
 	var releases []*Release
@@ -92,7 +93,7 @@ func GetReleases(endpoint string) ([]*Release, error) {
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to make request")
-			return nil, nil
+			return nil, err
 		}
 
 		body, err := io.ReadAll(resp.Body)
@@ -101,9 +102,10 @@ func GetReleases(endpoint string) ([]*Release, error) {
 		}
 		defer resp.Body.Close()
 
-		if contentType := resp.Header.Get("content-type"); contentType != "application/json" {
-			log.Error().Str("content-type", contentType).Msg("Wrong release list response content type")
-			return nil, nil
+		if contentType := resp.Header.Get("content-type"); contentType != ResponseContentType {
+			err := errors.New("wrong response content type")
+			log.Error().Err(err).Str("content-type", contentType).Msg("")
+			return nil, err
 		}
 		if resp.StatusCode > 200 {
 			var error Error
@@ -113,9 +115,10 @@ func GetReleases(endpoint string) ([]*Release, error) {
 				event.Int("code", resp.StatusCode).Bytes("body", body)
 			} else {
 				event.Int("code", error.Code).Str("message", error.Message)
+				err = errors.New(strings.ToLower(error.Message))
 			}
 			event.Msg("Failed to get release list response")
-			return nil, nil
+			return nil, err
 		}
 
 		var releaseList []*Release
@@ -164,6 +167,6 @@ func GetLatestRequired(constraints version.Constraints, versions []*version.Vers
 		}
 	}
 	err := errors.New("unsupported terraform core version")
-	log.Error().Err(err).Str("constraints", constraints.String()).Msg("Failed to find required version")
+	log.Error().Err(err).Str("constraints", constraints.String()).Msg("")
 	return nil, err
 }
