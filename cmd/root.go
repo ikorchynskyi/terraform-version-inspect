@@ -36,6 +36,9 @@ The list of available versions is taken from https://releases.hashicorp.com/.
 		})
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// SilenceErrors is an option to quiet errors down stream.
+		cmd.SilenceErrors = true
+
 		module, err := internal.GetModule(dir)
 		if err != nil {
 			return err
@@ -72,9 +75,6 @@ func Execute() {
 func init() {
 	// DisableDefaultCmd prevents Cobra from creating a default 'completion' command
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-
-	// SilenceErrors is an option to quiet errors down stream.
-	rootCmd.SilenceErrors = true
 
 	// SilenceUsage is an option to silence usage when an error occurs.
 	rootCmd.SilenceUsage = true
