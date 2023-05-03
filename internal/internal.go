@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
@@ -16,13 +17,18 @@ import (
 )
 
 const (
-	ReleaseInfoSource string = "https://releases.hashicorp.com/index.json"
+	ReleaseListLimit    int    = 20
+	ReleaseListEndpoint string = "https://api.releases.hashicorp.com/v1/releases/terraform"
 )
 
-type Releases struct {
-	Terraform struct {
-		Versions map[string]struct{}
-	}
+type Release struct {
+	Version          string
+	TimestampCreated *time.Time `json:"timestamp_created,omitempty"`
+}
+
+type Error struct {
+	Code    int
+	Message string
 }
 
 func GetModule(dir string) (*tfconfig.Module, error) {
@@ -65,32 +71,82 @@ func GetConstraints(module *tfconfig.Module) (version.Constraints, error) {
 	return constraints, nil
 }
 
-func GetVersions() ([]*version.Version, error) {
-	response, err := http.Get(ReleaseInfoSource)
+func GetReleases(endpoint string) ([]*Release, error) {
+	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		return nil, err
+		log.Error().Err(err).Msg("Failed to create request")
+		return nil, nil
 	}
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to read response body")
-	}
-	response.Body.Close()
-	if response.StatusCode > 299 {
-		log.Error().
-			Str("source", ReleaseInfoSource).Int("code", response.StatusCode).Bytes("body", body).
-			Msg("Failed to request the release information source")
-	}
-	var releases Releases
-	err = json.Unmarshal(body, &releases)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal response")
-		return nil, err
-	}
-	versions := make([]*version.Version, 0, len(releases.Terraform.Versions))
-	for k := range releases.Terraform.Versions {
-		v, err := version.NewVersion(k)
+	req.Header.Set("accept", "application/json")
+	query := req.URL.Query()
+
+	var releases []*Release
+	var after *time.Time
+
+	for {
+		if after != nil {
+			query.Set("after", after.Format(time.RFC3339Nano))
+			req.URL.RawQuery = query.Encode()
+		}
+		log.Debug().Str("url", req.URL.String()).Msg("Got release list")
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			log.Error().Err(err).Str("version", k).Msg("Failed to parse the given terraform version")
+			log.Error().Err(err).Msg("Failed to make request")
+			return nil, nil
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read response body")
+		}
+		defer resp.Body.Close()
+
+		if contentType := resp.Header.Get("content-type"); contentType != "application/json" {
+			log.Error().Str("content-type", contentType).Msg("Wrong release list response content type")
+			return nil, nil
+		}
+		if resp.StatusCode > 200 {
+			var error Error
+			err = json.Unmarshal(body, &error)
+			event := log.Error()
+			if err != nil {
+				event.Int("code", resp.StatusCode).Bytes("body", body)
+			} else {
+				event.Int("code", error.Code).Str("message", error.Message)
+			}
+			event.Msg("Failed to get release list response")
+			return nil, nil
+		}
+
+		var releaseList []*Release
+		err = json.Unmarshal(body, &releaseList)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to unmarshal response")
+			return nil, err
+		}
+		if len(releaseList) == 0 {
+			break
+		}
+
+		releases = append(releases, releaseList...)
+		if after = releaseList[len(releaseList)-1].TimestampCreated; after == nil {
+			break
+		}
+	}
+
+	return releases, nil
+}
+
+func GetVersions() ([]*version.Version, error) {
+	releases, err := GetReleases(ReleaseListEndpoint)
+	if err != nil {
+		return nil, err
+	}
+	versions := make([]*version.Version, 0, len(releases))
+	for _, r := range releases {
+		v, err := version.NewVersion(r.Version)
+		if err != nil {
+			log.Error().Err(err).Str("version", r.Version).Msg("Failed to parse the given terraform version")
 			continue
 		}
 		versions = append(versions, v)

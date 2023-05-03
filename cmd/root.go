@@ -83,5 +83,3 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "turn on debug logging")
 	rootCmd.PersistentFlags().StringVar(&dir, "dir", ".", "path that contains terraform configuration files")
 }
-
-// "github.com/hashicorp/terraform-config-inspect/tfconfig"

@@ -10,6 +10,7 @@ RUN go mod download
 RUN go mod verify
 
 COPY . .
+RUN go test ./...
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags='-w -s' -o 'dist/terraform-version-inspect'
 
 FROM scratch
