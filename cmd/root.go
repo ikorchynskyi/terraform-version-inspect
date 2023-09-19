@@ -51,7 +51,7 @@ The list of available versions is taken from https://releases.hashicorp.com/.
 		if err != nil {
 			return err
 		}
-		latestRequired, err := internal.GetLatestRequired(constraints, versions)
+		latestRequired, err := internal.GetLatestRequired(constraints, versions, registry)
 		if err != nil {
 			return err
 		}
@@ -62,6 +62,7 @@ The list of available versions is taken from https://releases.hashicorp.com/.
 
 var debug bool
 var dir string
+var registry string
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -82,4 +83,5 @@ func init() {
 	// Persistent flags which will be global for the application.
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "turn on debug logging")
 	rootCmd.PersistentFlags().StringVar(&dir, "dir", ".", "path that contains terraform configuration files")
+	rootCmd.PersistentFlags().StringVar(&registry, "registry", "", "ensure the terraform image being available in the specified registry")
 }

@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
 	"github.com/rs/zerolog/log"
@@ -161,9 +163,16 @@ func GetVersions() ([]*version.Version, error) {
 	return versions, nil
 }
 
-func GetLatestRequired(constraints version.Constraints, versions []*version.Version) (*version.Version, error) {
+func GetLatestRequired(constraints version.Constraints, versions []*version.Version, registry string) (*version.Version, error) {
 	for _, v := range versions {
 		if constraints.Check(v) {
+			if registry != "" {
+				_, err := crane.Config(fmt.Sprintf("%s/hashicorp/terraform:%s", registry, v))
+				if err != nil {
+					log.Error().Str("version", v.String()).Err(err).Msg("No image found")
+					continue
+				}
+			}
 			log.Debug().Str("version", v.String()).Msg("Required version found")
 			return v, nil
 		}

@@ -8,9 +8,10 @@ The list of available versions is taken from https://releases.hashicorp.com/.
         terraform-version-inspect [flags]
 
 ### Flags
-            --debug        turn on debug logging
-            --dir string   path that contains terraform configuration files (default ".")
-        -h, --help         help for terraform-version-inspect
+            --debug             turn on debug logging
+            --dir string        path that contains terraform configuration files (default ".")
+            --registry string   ensure the terraform image being available in the specified registry
+        -h, --help              help for terraform-version-inspect
 
 ### Example
 
