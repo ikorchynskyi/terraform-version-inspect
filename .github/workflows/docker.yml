@@ -15,6 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: ./Dockerfile
+            flavor: |
+              latest=auto
+          - dockerfile: ./Dockerfile.alpine
+            flavor: |
+              latest=auto
+              suffix=-alpine,onlatest=true
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -36,8 +47,11 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
+        context: .
+        file: ${{ matrix.dockerfile }}
         platforms: 'linux/amd64,linux/arm64/v8'
         provenance: false
         push: ${{ github.event.deleted == false && startsWith(github.event.ref, 'refs/tags/v') }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        flavor: ${{ matrix.flavor }}
