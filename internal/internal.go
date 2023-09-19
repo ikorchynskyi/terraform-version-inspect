@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -87,6 +88,7 @@ func GetReleases(endpoint string) ([]*Release, error) {
 	for {
 		if after != nil {
 			query.Set("after", after.Format(time.RFC3339Nano))
+			query.Set("limit", strconv.Itoa(ReleaseListLimit))
 			req.URL.RawQuery = query.Encode()
 		}
 		log.Debug().Str("url", req.URL.String()).Msg("Got release list")
