@@ -26,6 +26,10 @@ jobs:
             flavor: |
               latest=auto
               suffix=-alpine,onlatest=true
+          - dockerfile: ./Dockerfile.jenkins
+            flavor: |
+              latest=auto
+              suffix=-jenkins,onlatest=true
     steps:
     - name: Checkout
       uses: actions/checkout@v3
