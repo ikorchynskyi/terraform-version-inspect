@@ -17,7 +17,8 @@ ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags='-w -s' -o 'dist/terraform-version-inspect'
 
 FROM alpine:${ALPINE_VERSION}
+RUN apk add --no-cache tini
 COPY --from=builder [ "/build/dist/terraform-version-inspect", "/usr/local/bin/" ]
 WORKDIR /mnt
-ENTRYPOINT [ "/usr/local/bin/terraform-version-inspect" ]
-CMD [ "--help" ]
+ENTRYPOINT [ "tini", "-g", "--" ]
+CMD [ "terraform-version-inspect", "--help" ]
