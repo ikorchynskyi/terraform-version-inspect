@@ -51,7 +51,7 @@ The list of available versions is taken from https://releases.hashicorp.com/.
 		if err != nil {
 			return err
 		}
-		latestRequired, err := internal.GetLatestRequired(constraints, versions, registry)
+		latestRequired, err := internal.GetLatestRequired(constraints, versions, prerelease, registry)
 		if err != nil {
 			return err
 		}
@@ -62,6 +62,7 @@ The list of available versions is taken from https://releases.hashicorp.com/.
 
 var debug bool
 var dir string
+var prerelease bool
 var registry string
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -83,5 +84,6 @@ func init() {
 	// Persistent flags which will be global for the application.
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "turn on debug logging")
 	rootCmd.PersistentFlags().StringVar(&dir, "dir", ".", "path that contains terraform configuration files")
+	rootCmd.PersistentFlags().BoolVar(&prerelease, "prerelease", false, "allow to use prerelease versions")
 	rootCmd.PersistentFlags().StringVar(&registry, "registry", "", "ensure the terraform image being available in the specified registry")
 }

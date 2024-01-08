@@ -163,9 +163,16 @@ func GetVersions() ([]*version.Version, error) {
 	return versions, nil
 }
 
-func GetLatestRequired(constraints version.Constraints, versions []*version.Version, registry string) (*version.Version, error) {
+func GetLatestRequired(constraints version.Constraints, versions []*version.Version, prerelease bool, registry string) (*version.Version, error) {
 	for _, v := range versions {
-		if constraints.Check(v) {
+		var found bool
+		if prerelease {
+			found = constraints.Check(v.Core())
+		} else {
+			found = constraints.Check(v)
+		}
+		log.Debug().Str("version", v.String()).Msg("Check version")
+		if found {
 			if registry != "" {
 				_, err := crane.Config(fmt.Sprintf("%s/hashicorp/terraform:%s", registry, v))
 				if err != nil {
